@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Historias de usuario{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-5 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h1 class="h4 mb-0">Nueva historia</h1>
+            </div>
+            <div class="card-body">
+                <form method="post" action="/user-stories">
+                    <div class="mb-3">
+                        <label for="prompt" class="form-label">Describe tu idea o proyecto</label>
+                        <textarea
+                            id="prompt"
+                            name="prompt"
+                            class="form-control"
+                            rows="6"
+                            placeholder="Ejemplo: App de gestion de tareas para un equipo Scrum con prioridades y estimaciones."
+                            required
+                        ></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Generar historia con IA</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <h2 class="h4 mb-3">Historias generadas</h2>
+        {% if stories %}
+            <div class="row g-3">
+                {% for story in stories %}
+                <div class="col-12">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start gap-3">
+                                <div>
+                                    <h3 class="h5 card-title">{{ story.project }}</h3>
+                                    <p class="mb-1"><strong>Rol:</strong> {{ story.role }}</p>
+                                    <p class="mb-1"><strong>Objetivo:</strong> {{ story.goal }}</p>
+                                    <p class="mb-2 text-muted">{{ story.description }}</p>
+                                    <span class="badge text-bg-secondary">{{ story.priority }}</span>
+                                    <span class="badge text-bg-info">{{ story.story_points }} SP</span>
+                                    <span class="badge text-bg-light text-dark">{{ story.effort_hours }} h</span>
+                                </div>
+                                <div class="d-flex flex-column gap-2">
+                                    <form method="post" action="/user-stories/{{ story.id }}/generate-tasks">
+                                        <button type="submit" class="btn btn-success btn-sm">Generar tareas</button>
+                                    </form>
+                                    <a href="/user-stories/{{ story.id }}/tasks" class="btn btn-outline-primary btn-sm">
+                                        Ver tareas
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="alert alert-info">Aun no hay historias. Usa el formulario para generar la primera.</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
