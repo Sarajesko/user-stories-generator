@@ -1,5 +1,7 @@
 # User Stories Generator — Entregable 3
 
+[![CI](https://github.com/Sarajesko/user-stories-generator/actions/workflows/ci.yml/badge.svg)](https://github.com/Sarajesko/user-stories-generator/actions/workflows/ci.yml)
+
 Aplicación web con **FastAPI**, **Jinja2** y **Bootstrap** que genera **historias de usuario** y **tareas** a partir de un prompt, usando **Azure OpenAI + LangChain** con salidas estructuradas Pydantic. Todo se persiste en **MySQL**.
 
 **Repositorio:** [github.com/Sarajesko/user-stories-generator](https://github.com/Sarajesko/user-stories-generator)
@@ -48,6 +50,7 @@ Dos llamadas encadenadas al LLM: primero la historia, luego las tareas con el co
 | Persistencia MySQL (SQLAlchemy, relación 1-N) | Listo |
 | Health check de base de datos | Listo |
 | Tests pytest por pasos (mocks de IA) | Listo |
+| CI GitHub Actions (pytest en push/PR) | Listo |
 
 ---
 
