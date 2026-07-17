@@ -1,38 +1,84 @@
-# User Stories Generator (FastAPI) — Entregable 3
+# User Stories Generator — Entregable 3
 
-Aplicación web multi-archivo que genera **historias de usuario** y **tareas** a partir de un prompt, usando **Azure OpenAI + LangChain** con salidas estructuradas Pydantic. Los resultados se persisten en **MySQL** y se muestran con plantillas **Jinja2** y Bootstrap.
+Aplicación web con **FastAPI**, **Jinja2** y **Bootstrap** que genera **historias de usuario** y **tareas** a partir de un prompt, usando **Azure OpenAI + LangChain** con salidas estructuradas Pydantic. Todo se persiste en **MySQL**.
 
-## Características
+**Repositorio:** [github.com/Sarajesko/user-stories-generator](https://github.com/Sarajesko/user-stories-generator)
 
-- Generación de historias de usuario desde un prompt libre (`UserStorySchema`).
-- Generación de tareas asociadas a cada historia (`TasksSchema`).
-- Dos llamadas encadenadas al LLM: primero la historia, luego las tareas usando el contexto de la historia.
-- Modelos SQLAlchemy `UserStory` y `Task` con relación 1-N.
-- Interfaz web con formulario, listado de historias y tabla de tareas.
-- Tests automáticos con `pytest` (31 tests).
+---
 
-## Requisitos
+## Índice
 
-- Python 3.11+ (probado con 3.14).
-- MySQL local (XAMPP u otro) o MySQL en Azure.
-- Recurso de **Azure OpenAI** con deployment activo.
+1. [¿Para qué sirve?](#para-qué-sirve)
+2. [Qué incluye](#qué-incluye)
+3. [Arquitectura](#arquitectura)
+4. [Estructura](#estructura)
+5. [Requisitos](#requisitos)
+6. [Arranque rápido](#arranque-rápido)
+7. [Uso de la aplicación](#uso-de-la-aplicación)
+8. [Modelos de datos](#modelos-de-datos)
+9. [API / rutas](#api--rutas)
+10. [Tests](#tests)
+11. [Stack](#stack)
+12. [Solución de problemas](#solución-de-problemas)
+13. [Roadmap](#roadmap)
+14. [Licencia](#licencia)
 
-## Estructura del proyecto
+---
+
+## ¿Para qué sirve?
+
+Acelerar el diseño de product backlog:
+
+- escribes un prompt libre (p. ej. “sistema de reservas para peluquería”);
+- la IA genera una historia de usuario estructurada (rol, objetivo, razón, puntos…);
+- desde esa historia genera un conjunto de tareas;
+- todo queda guardado en MySQL y visible en la UI.
+
+Dos llamadas encadenadas al LLM: primero la historia, luego las tareas con el contexto de la historia.
+
+---
+
+## Qué incluye
+
+| Área | Estado |
+|------|--------|
+| Generación de historias (`UserStorySchema`) | Listo |
+| Generación de tareas asociadas (`TasksSchema`) | Listo |
+| UI Jinja2 + Bootstrap (formulario, listado, tareas) | Listo |
+| Persistencia MySQL (SQLAlchemy, relación 1-N) | Listo |
+| Health check de base de datos | Listo |
+| Tests pytest por pasos (mocks de IA) | Listo |
+
+---
+
+## Arquitectura
+
+```mermaid
+flowchart LR
+  browser[Navegador] --> ui[Jinja2 / Bootstrap]
+  ui --> api[FastAPI]
+  api --> llm[LangChain + Azure OpenAI]
+  api --> db[(MySQL user_stories_db)]
+```
+
+---
+
+## Estructura
 
 ```
-m4_proyectoEntregable_Pablo_garcia/
-├── main.py                 # Arranque FastAPI
-├── config.py               # Variables de entorno
-├── database.py             # SQLAlchemy engine y sesión
-├── templating.py           # Configuración Jinja2
+user-stories-generator/
+├── main.py                 Arranque FastAPI
+├── config.py               Variables de entorno
+├── database.py             Engine / sesión SQLAlchemy
+├── templating.py           Jinja2
 ├── models/
 │   ├── user_story.py
 │   └── task.py
 ├── schemas/
-│   ├── user_story.py
+│   ├── user_story.py       Salida estructurada LLM
 │   └── task.py
 ├── services/
-│   └── llm_service.py      # generar_historia / generar_tareas
+│   └── llm_service.py      generar_historia / generar_tareas
 ├── routers/
 │   └── user_stories.py
 ├── templates/
@@ -40,59 +86,45 @@ m4_proyectoEntregable_Pablo_garcia/
 │   ├── user-stories.html
 │   └── tasks.html
 ├── tests/
-├── requirements.txt
 ├── .env.example
-└── pytest.ini
+├── pytest.ini
+├── requirements.txt
+├── LICENSE
+└── README.md
 ```
 
-## Instalación
+---
 
-Desde la carpeta del proyecto (`m4_proyectoEntregable_Pablo_garcia`):
+## Requisitos
 
-```bash
+| Herramienta | Para qué |
+|-------------|----------|
+| **Python 3.11+** | Runtime |
+| **MySQL** (XAMPP u otro) | Persistencia |
+| **Azure OpenAI** | Generación de historias y tareas |
+
+---
+
+## Arranque rápido
+
+```powershell
+cd m4_proyectoEntregable_Pablo_garcia
 python -m venv venv
-```
-
-En Windows:
-
-```bash
-venv\Scripts\activate
-```
-
-Instalar dependencias:
-
-```bash
+.\venv\Scripts\Activate.ps1
 pip install -r requirements.txt
+copy .env.example .env
 ```
 
-## Configuración de MySQL
-
-1. Arranca MySQL (en XAMPP: servicio **MySQL** en ejecución).
-2. Crea la base de datos en phpMyAdmin o consola:
+Crea la base:
 
 ```sql
 CREATE DATABASE user_stories_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-3. Copia `.env.example` a `.env` y ajusta la conexión:
+Edita `.env`:
 
 ```env
 DATABASE_URL=mysql+pymysql://root@127.0.0.1:3306/user_stories_db
-```
-
-Si tu usuario `root` tiene contraseña:
-
-```env
-DATABASE_URL=mysql+pymysql://root:TU_PASSWORD@127.0.0.1:3306/user_stories_db
-```
-
-Las tablas `user_stories` y `tasks` se crean automáticamente al arrancar la aplicación.
-
-## Configuración de Azure OpenAI
-
-En el mismo `.env`, completa las credenciales de Azure:
-
-```env
 AZURE_OPENAI_ENDPOINT=https://TU-RECURSO.openai.azure.com/
 AZURE_OPENAI_API_KEY=tu-api-key
 AZURE_OPENAI_API_VERSION=2025-04-01-preview
@@ -102,105 +134,134 @@ MAX_TOKENS=2048
 TOP_P=1.0
 ```
 
-**Importante:**
+Si `root` tiene contraseña: `mysql+pymysql://root:TU_PASSWORD@127.0.0.1:3306/user_stories_db`.
 
-- No incluyas `.env` en la entrega (contiene credenciales).
-- `MAX_TOKENS` debe ser **al menos 1024** (recomendado **2048**) para generar varias tareas en JSON sin que se corte la respuesta.
+Las tablas se crean al arrancar la app.
 
-## Ejecución
-
-```bash
+```powershell
 uvicorn main:app --reload --port 8003
 ```
 
-Abre en el navegador:
+| Recurso | Valor |
+|---------|--------|
+| UI | [http://127.0.0.1:8003/user-stories](http://127.0.0.1:8003/user-stories) |
+| Health | [http://127.0.0.1:8003/health](http://127.0.0.1:8003/health) |
+| Swagger | [http://127.0.0.1:8003/docs](http://127.0.0.1:8003/docs) |
 
-- **Interfaz principal:** http://127.0.0.1:8003/user-stories
-- **Health check:** http://127.0.0.1:8003/health
-- **Swagger (opcional):** http://127.0.0.1:8003/docs
+> Puerto **8003** por defecto para no chocar con otros proyectos en 8000.
 
-> Si el puerto 8000 está ocupado por otro proyecto, usa `--port 8003` u otro libre.
+`MAX_TOKENS` debe ser **≥ 1024** (recomendado **2048**) para no cortar el JSON de tareas.
+
+---
 
 ## Uso de la aplicación
 
-1. En `/user-stories`, escribe un prompt en el textarea. Ejemplo:
+1. Abre `/user-stories` y escribe un prompt. Ejemplo:
 
-   ```
+   ```text
    Sistema de reservas online para una peluquería. Los clientes reservan cita desde el móvil
    y la recepcionista ve el calendario del día y confirma las reservas.
    ```
 
-2. Pulsa **Generar historia con IA**. La historia se guarda en MySQL y aparece en el listado.
+2. Pulsa **Generar historia con IA** → se guarda en MySQL y aparece en el listado.
+3. En la card, pulsa **Generar tareas** → la IA descompone la historia y redirige a la vista de tareas.
+4. Pulsa **Ver tareas** para consultar las ya generadas.
 
-3. En la card de la historia, pulsa **Generar tareas**. La IA descompone la historia en tareas y redirige a la vista de tareas.
-
-4. Pulsa **Ver tareas** para consultar las tareas ya generadas.
-
-## Endpoints
-
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| GET | `/user-stories` | Formulario + listado de historias |
-| POST | `/user-stories` | Genera historia con IA y persiste |
-| POST | `/user-stories/{id}/generate-tasks` | Genera tareas con IA y persiste |
-| GET | `/user-stories/{id}/tasks` | Muestra historia y sus tareas |
-| GET | `/health` | Comprueba conexión a MySQL |
+---
 
 ## Modelos de datos
 
 ### UserStory
 
-- `id`, `project`, `role`, `goal`, `reason`, `description`
-- `priority` (`baja`, `media`, `alta`, `bloqueante`)
-- `story_points` (1–8), `effort_hours`, `created_at`
+| Campo | Notas |
+|-------|--------|
+| `project`, `role`, `goal`, `reason`, `description` | Texto estructurado |
+| `priority` | `baja` · `media` · `alta` · `bloqueante` |
+| `story_points` | 1–8 |
+| `effort_hours` | > 0 |
+| `created_at` | Timestamp |
 
 ### Task
 
-- `id`, `title`, `description`, `priority`, `effort_hours`
-- `status` (`pendiente`, `en progreso`, `en revisión`, `completada`)
-- `assigned_to`, `user_story_id`, `created_at`
+| Campo | Notas |
+|-------|--------|
+| `title`, `description`, `assigned_to` | Texto |
+| `priority` | Mismos valores que la historia |
+| `status` | `pendiente` · `en progreso` · `en revisión` · `completada` |
+| `effort_hours` | > 0 |
+| `user_story_id` | FK → historia |
+
+Relación **1-N** con cascade delete.
+
+---
+
+## API / rutas
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| GET | `/` | Mensaje de salud JSON |
+| GET | `/health` | Comprueba MySQL |
+| GET | `/user-stories` | Formulario + listado (HTML) |
+| POST | `/user-stories` | Genera historia (form `prompt`) → redirect |
+| POST | `/user-stories/{id}/generate-tasks` | Genera tareas → redirect |
+| GET | `/user-stories/{id}/tasks` | Vista historia + tareas |
+
+Errores habituales: **400** (prompt vacío), **404** (historia inexistente), **502** (fallo LLM).
+
+---
 
 ## Tests
 
-Ejecutar todos los tests:
-
-```bash
+```powershell
 python -m pytest -v
-```
-
-Por paso del entregable:
-
-```bash
 python -m pytest -m entregable3_paso2 -v   # Modelos y BD
 python -m pytest -m entregable3_paso3 -v   # Schemas Pydantic
 python -m pytest -m entregable3_paso4 -v   # Servicio IA (mocks)
 python -m pytest -m entregable3_paso5 -v   # Endpoints y vistas
 ```
 
-Los tests de IA usan mocks y **no consumen Azure** en pytest. Los tests de modelos usan SQLite en memoria.
+Los tests de IA usan mocks (no consumen Azure). Los de modelos pueden usar SQLite en memoria.
 
-## Entrega
+---
 
-Nombre del ZIP: `m4_proyectoEntregable_Pablo_garcia.zip`
+## Stack
 
-Incluir:
+| Capa | Tecnología |
+|------|------------|
+| View | Jinja2 + Bootstrap 5 |
+| API | FastAPI + python-multipart |
+| Model | SQLAlchemy 2 + MySQL (pymysql) |
+| IA | LangChain + langchain-openai (`AzureChatOpenAI`, `with_structured_output`) |
+| Validación | Pydantic v2 |
+| Tests | pytest + httpx |
 
-- Todo el código fuente (`.py`, `.html`, `requirements.txt`, `.env.example`, `pytest.ini`, `tests/`)
+---
 
-Excluir:
+## Solución de problemas
 
-- `venv/` o `.venv/`
-- `__pycache__/`
-- `.env` (credenciales)
-- `.pytest_cache/`
+| Problema | Qué revisar |
+|----------|-------------|
+| `/health` falla | MySQL arrancado; `DATABASE_URL` correcta; BD creada |
+| 502 al generar | Deployment Azure; `MAX_TOKENS` ≥ 2048 |
+| JSON de tareas cortado | Subir `MAX_TOKENS` |
+| Puerto ocupado | Otro `--port` o liberar 8003 |
 
-## Stack técnico
+---
 
-- **FastAPI** + **Jinja2** + **Bootstrap 5**
-- **SQLAlchemy** + **MySQL** (`pymysql`)
-- **Pydantic v2** (schemas y salida estructurada)
-- **LangChain** + **langchain-openai** (`AzureChatOpenAI`, `with_structured_output`)
+## Roadmap
+
+- Edición manual de historias/tareas desde la UI.
+- Export CSV / JSON del backlog.
+- Docker Compose (MySQL + API).
+
+---
+
+## Licencia
+
+[MIT](LICENSE) — software libre: puedes usar, modificar y redistribuir con la atribución correspondiente.
+
+---
 
 ## Autor
 
-Pablo García — Programa Avanzado en Inteligencia Artificial para Programar (Entregable 3).
+**Pablo García Márquez** — Programa Avanzado en Inteligencia Artificial para Programar (Entregable 3).
