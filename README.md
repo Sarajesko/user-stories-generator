@@ -264,4 +264,4 @@ Los tests de IA usan mocks (no consumen Azure). Los de modelos pueden usar SQLit
 
 ## Autor
 
-**Pablo García Márquez** — Programa Avanzado en Inteligencia Artificial para Programar (Entregable 3).
+**Pablo García Márquez**
